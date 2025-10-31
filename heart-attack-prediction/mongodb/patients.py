@@ -1,28 +1,29 @@
-# main.py
-from fastapi import FastAPI, HTTPException
-from models import Patient
-from db import patients_coll
+from fastapi import APIRouter, HTTPException
+from heart_project.models import Patient
+from heart_project.db import patients_coll
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 
-app = FastAPI(title="Heart Patients API")
+router = APIRouter()
 
-# Optional root endpoint
-@app.get("/")
+
+@router.get("/")
 def root():
     return {"message": "Heart Patients API is running!"}
 
-# POST endpoint to create a patient
-@app.post("/patients", status_code=201)
+
+@router.post("/patients", status_code=201)
 def create_patient(patient: Patient):
     data = patient.dict()
-    
+
     # Normalize gender
-    g = data.get("gender").strip().lower()
-    if g in ("m", "male", "1"):
-        data["gender"] = "Male"
-    elif g in ("f", "female", "0"):
-        data["gender"] = "Female"
+    g = data.get("gender")
+    if isinstance(g, str):
+        g = g.strip().lower()
+        if g in ("m", "male", "1"):
+            data["gender"] = "Male"
+        elif g in ("f", "female", "0"):
+            data["gender"] = "Female"
 
     try:
         res = patients_coll.insert_one(data)
@@ -30,12 +31,11 @@ def create_patient(patient: Patient):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# GET endpoint to fetch all patients
-@app.get("/patients")
+
+@router.get("/patients")
 def get_all_patients():
     try:
         patients = list(patients_coll.find())
-        # Convert ObjectId to string for JSON serialization
         for patient in patients:
             patient["_id"] = str(patient["_id"])
         return patients
@@ -43,8 +43,7 @@ def get_all_patients():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# PUT endpoint to update an existing patient by id
-@app.put("/patients/{patient_id}")
+@router.put("/patients/{patient_id}")
 def update_patient(patient_id: str, patient: Patient):
     data = patient.dict()
 
@@ -73,8 +72,7 @@ def update_patient(patient_id: str, patient: Patient):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# DELETE endpoint to remove a patient by id
-@app.delete("/patients/{patient_id}")
+@router.delete("/patients/{patient_id}")
 def delete_patient(patient_id: str):
     try:
         try:
