@@ -17,3 +17,13 @@ VALUES
 (3, 'LV hypertrophy', 0.0, 2, 0, 'Normal', '2025-10-31'),
 (4, 'Normal', 1.0, 2, 2, 'Reversible defect', '2025-10-31'),
 (5, 'ST-T abnormality', 3.4, 3, 0, 'Normal', '2025-10-31');
+
+SET @p_id = LAST_INSERT_ID();
+
+-- Step 2: Update the test to trigger the log
+UPDATE tests
+SET st_depression = 3.0, slope = 2
+WHERE patient_id = @p_id;
+
+-- Step 3: Check logs table
+SELECT * FROM logs;

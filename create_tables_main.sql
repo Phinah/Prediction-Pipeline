@@ -29,3 +29,17 @@ CREATE TABLE IF NOT EXISTS tests (
     recorded_date DATE,
     FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+--  LOGS TABLE
+CREATE TABLE IF NOT EXISTS logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    test_id INT,
+    patient_id INT,
+    old_st_depression DECIMAL(5,2),
+    new_st_depression DECIMAL(5,2),
+    old_slope INT,
+    new_slope INT,
+    action VARCHAR(50),
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (test_id) REFERENCES tests(test_id) ON DELETE CASCADE
+);

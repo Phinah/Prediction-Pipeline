@@ -47,3 +47,36 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS after_tests_update $$
+
+CREATE TRIGGER after_tests_update
+AFTER UPDATE ON tests
+FOR EACH ROW
+BEGIN
+    -- Only log if st_depression or slope actually changed
+    IF OLD.st_depression <> NEW.st_depression OR OLD.slope <> NEW.slope THEN
+        INSERT INTO logs (
+            test_id,
+            patient_id,
+            old_st_depression,
+            new_st_depression,
+            old_slope,
+            new_slope,
+            action
+        )
+        VALUES (
+            OLD.test_id,
+            OLD.patient_id,
+            OLD.st_depression,
+            NEW.st_depression,
+            OLD.slope,
+            NEW.slope,
+            'UPDATED TEST'
+        );
+    END IF;
+END$$
+
+DELIMITER ;

@@ -1,6 +1,7 @@
 # --- FastAPI + MySQL Connection Setup ---
 from fastapi import FastAPI, HTTPException
 import mysql.connector
+import Request
 
 # Create the FastAPI app
 app = FastAPI(title="Heart Attack API", version="1.0")
@@ -86,6 +87,61 @@ def delete_patient(patient_id: int):
             raise HTTPException(status_code=404, detail=f"⚠️ No patient found with ID {patient_id}")
 
         return {"message": f"🗑️ Patient {patient_id} deleted successfully"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.post("/patients/")
+def create_patient(request: Request):
+    try:
+        data = request.json()  # read JSON body
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Call stored procedure
+        cursor.callproc('add_patient_with_test', (
+            data["age"], data["gender"], data["resting_bp"], data["cholesterol"],
+            data["fasting_bs"], data["max_heart_rate"], data["exercise_angina"],
+            data["target"], data["ecg_result"], data["st_depression"], data["slope"],
+            data["num_major_vessels"], data["thalassemia"], data["recorded_date"]
+        ))
+        conn.commit()
+
+        return {"message": "✅ Patient and test record added successfully"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.get("/patients/{patient_id}")
+def read_patient(patient_id: int):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT p.*, t.*
+            FROM patients p
+            LEFT JOIN tests t ON p.patient_id = t.patient_id
+            WHERE p.patient_id = %s
+        """
+        cursor.execute(query, (patient_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            raise HTTPException(status_code=404, detail=f"⚠️ Patient ID {patient_id} not found")
+
+        return result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
