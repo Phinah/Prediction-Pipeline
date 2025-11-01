@@ -70,7 +70,8 @@ def update_patient(
         conn.close()
 
 
-# --- DELETE (DELETE) endpoint ---
+#  Delete (DELETE) endpoint for removing patients
+
 @app.delete("/patients/{patient_id}")
 def delete_patient(patient_id: int):
     try:
