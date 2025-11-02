@@ -1,26 +1,27 @@
 # --- FastAPI + MySQL Connection Setup ---
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Body
 import mysql.connector
-import Request
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 # Create the FastAPI app
 app = FastAPI(title="Heart Attack API", version="1.0")
-
-# Database connection function
 def get_db_connection():
-    connection = mysql.connector.connect(
-        host="localhost",          # keep this if you're using MySQL locally
-        user="root",               # your MySQL username
-        password="admin123",       # ✅ your real MySQL password
-        database="heart_attack_db" # ✅ your confirmed database name
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST","localhost"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASS"),
+        database=os.getenv("DB_NAME")
     )
+
     return connection
 
 
 # --- A simple test endpoint ---
 @app.get("/")
 def read_root():
-    return {"message": "✅ FastAPI is running and connected to MySQL database heart_attack_db!"}
+    return {"message": "FastAPI is running and connected to MySQL database heart_attack_db!"}
 
 
 # --- UPDATE (PUT) endpoint ---
@@ -59,9 +60,9 @@ def update_patient(
         conn.commit()
 
         if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail=f"⚠️ No patient found with ID {patient_id}")
+            raise HTTPException(status_code=404, detail=f"No patient found with ID {patient_id}")
 
-        return {"message": f"✅ Patient {patient_id} updated successfully"}
+        return {"message": f"Patient {patient_id} updated successfully"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -84,7 +85,7 @@ def delete_patient(patient_id: int):
         conn.commit()
 
         if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail=f"⚠️ No patient found with ID {patient_id}")
+            raise HTTPException(status_code=404, detail=f"No patient found with ID {patient_id}")
 
         return {"message": f"🗑️ Patient {patient_id} deleted successfully"}
 
@@ -95,25 +96,42 @@ def delete_patient(patient_id: int):
         cursor.close()
         conn.close()
 
-
+# --- CREATE (POST) endpoint ---
 @app.post("/patients/")
-def create_patient(request: Request):
+def create_patient(
+    age: int = Body(...),
+    gender: str = Body(...),
+    resting_bp: int = Body(...),
+    cholesterol: int = Body(...),
+    fasting_bs: int = Body(...),
+    max_heart_rate: int = Body(...),
+    exercise_angina: int = Body(...),
+    target: int = Body(...)
+):
     try:
-        data = request.json()  # read JSON body
-
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Call stored procedure
-        cursor.callproc('add_patient_with_test', (
-            data["age"], data["gender"], data["resting_bp"], data["cholesterol"],
-            data["fasting_bs"], data["max_heart_rate"], data["exercise_angina"],
-            data["target"], data["ecg_result"], data["st_depression"], data["slope"],
-            data["num_major_vessels"], data["thalassemia"], data["recorded_date"]
+        insert_query = """
+            INSERT INTO patients (
+                age, gender, resting_bp, cholesterol, fasting_bs,
+                max_heart_rate, exercise_angina, target
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+        cursor.execute(insert_query, (
+            age, gender, resting_bp, cholesterol, fasting_bs,
+            max_heart_rate, exercise_angina, target
         ))
         conn.commit()
 
-        return {"message": "✅ Patient and test record added successfully"}
+        new_id = cursor.lastrowid
+
+        return {
+            "message": "Patient record created successfully",
+            "patient_id": new_id
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -139,9 +157,42 @@ def read_patient(patient_id: int):
         result = cursor.fetchone()
 
         if not result:
-            raise HTTPException(status_code=404, detail=f"⚠️ Patient ID {patient_id} not found")
+            raise HTTPException(status_code=404, detail=f"Patient ID {patient_id} not found")
 
         return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.get("/patients")
+def get_all_patients():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Retrieve all patients, optionally joined with test info
+        query = """
+            SELECT 
+                p.patient_id, p.age, p.gender, p.resting_bp, p.cholesterol,
+                p.fasting_bs, p.max_heart_rate, p.exercise_angina, p.target,
+                p.created_at,
+                t.test_id, t.ecg_result, t.st_depression, t.slope,
+                t.num_major_vessels, t.thalassemia, t.recorded_date
+            FROM patients p
+            LEFT JOIN tests t ON p.patient_id = t.patient_id
+            ORDER BY p.patient_id ASC
+        """
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        if not results:
+            return {"message": "No patients found in the database."}
+
+        return {"total_patients": len(results), "data": results}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
