@@ -1,4 +1,4 @@
-Heart Attack Database – FastAPI with MySQL and Mongo DB
+# Heart Attack Database – FastAPI with MySQL and Mongo DB
 Overview
 
 This project is part of Formative 1 – Database and API Integration, designed to demonstrate:
@@ -13,7 +13,7 @@ Integration between a relational database and an API backend
 
 Preparation for ML model integration (data for prediction tasks)
 
-Setup Guide (Windows)
+# Setup Guide (Windows)
 1️. Install Dependencies
 pip install fastapi uvicorn mysql-connector-python python-dotenv
 2️. Setup MySQL

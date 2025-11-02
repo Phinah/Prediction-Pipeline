@@ -200,3 +200,36 @@ def get_all_patients():
     finally:
         cursor.close()
         conn.close()
+
+# --- UPDATE (PUT) ---
+@app.put("/tests/{test_id}")
+def update_test(test_id: int,
+                heart_rate: int, systolic_bp: int, diastolic_bp: int,
+                blood_sugar: int, ck_mb: float, troponin: float):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        update_query = """
+            UPDATE tests
+            SET heart_rate = %s,
+                systolic_bp = %s,
+                diastolic_bp = %s,
+                blood_sugar = %s,
+                ck_mb = %s,
+                troponin = %s
+            WHERE test_id = %s
+        """
+        cursor.execute(update_query, (heart_rate, systolic_bp, diastolic_bp, blood_sugar, ck_mb, troponin, test_id))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail=f"⚠️ No test found with ID {test_id}")
+
+        return {"message": f"🧾 Test {test_id} updated successfully"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
