@@ -1,0 +1,11 @@
+
+
+{
+  "test_id": "T0001",
+  "record_id": "R0001",
+  "ck_mb": 1.8,
+  "troponin": 0.012,
+  "result": "negative",
+  "test_date": ISODate("2025-11-02T10:00:00Z")
+}
+

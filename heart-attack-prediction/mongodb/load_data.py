@@ -47,7 +47,7 @@ medical_records_col.delete_many({})
 heart_attack_tests_col.delete_many({})
 
 # Load data into 3 collections
-print("\n💾 Loading data into MongoDB...")
+print("\nLoading data into MongoDB...")
 
 for index, row in df.iterrows():
     # Generate IDs
@@ -92,9 +92,7 @@ medical_records_col.create_index("record_id", unique=True)
 heart_attack_tests_col.create_index("test_id", unique=True)
 
 # Summary
-print("\n" + "="*50)
 print(" SUCCESS! Data loaded into MongoDB")
-print("="*50)
 print(f" Patients collection: {patients_col.count_documents({})} records")
 print(f" Medical records collection: {medical_records_col.count_documents({})} records")
 print(f" Heart attack tests collection: {heart_attack_tests_col.count_documents({})} records")
