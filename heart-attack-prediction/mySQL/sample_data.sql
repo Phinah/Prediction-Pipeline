@@ -27,3 +27,15 @@ WHERE patient_id = @p_id;
 
 -- Step 3: Check logs table
 SELECT * FROM logs;
+
+
+-- ============================
+-- Insert sample test results
+-- ============================
+INSERT INTO tests (patient_id, heart_rate, systolic_bp, diastolic_bp, blood_sugar, ck_mb, troponin)
+VALUES
+(1, 150, 145, 90, 130, 2.1, 0.020),
+(2, 120, 160, 95, 180, 3.5, 0.035),
+(3, 187, 130, 85, 140, 1.8, 0.010),
+(4, 172, 120, 80, 100, 1.5, 0.008),
+(5, 178, 135, 82, 120, 2.3, 0.025);
