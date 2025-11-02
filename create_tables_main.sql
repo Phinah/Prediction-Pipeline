@@ -33,21 +33,6 @@ CREATE TABLE IF NOT EXISTS tests (
       ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-<<<<<<< HEAD
---  LOGS TABLE
-CREATE TABLE IF NOT EXISTS logs (
-    log_id INT AUTO_INCREMENT PRIMARY KEY,
-    test_id INT,
-    patient_id INT,
-    old_st_depression DECIMAL(5,2),
-    new_st_depression DECIMAL(5,2),
-    old_slope INT,
-    new_slope INT,
-    action VARCHAR(50),
-    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (test_id) REFERENCES tests(test_id) ON DELETE CASCADE
-);
-=======
 -- ============ Logs ==========================
 -- Audit table populated by triggers on tests
 CREATE TABLE IF NOT EXISTS logs (
@@ -63,4 +48,3 @@ CREATE TABLE IF NOT EXISTS logs (
 -- Helpful indexes
 CREATE INDEX idx_tests_patient ON tests(patient_id);
 CREATE INDEX idx_logs_patient  ON logs(patient_id);
->>>>>>> db8d970 (Updated database setup and FastAPI CRUD  added logs table, triggers, sample data, and stored procedure)
