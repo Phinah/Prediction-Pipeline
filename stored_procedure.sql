@@ -7,42 +7,31 @@ DELIMITER $$
 
 CREATE PROCEDURE add_patient_with_test(
     IN p_age INT,
-    IN p_gender VARCHAR(10),
-    IN p_resting_bp INT,
-    IN p_cholesterol INT,
-    IN p_fasting_bs BOOLEAN,
-    IN p_max_heart_rate INT,
-    IN p_exercise_angina BOOLEAN,
-    IN p_target BOOLEAN,
-    IN t_ecg_result VARCHAR(50),
-    IN t_st_depression DECIMAL(5,2),
-    IN t_slope INT,
-    IN t_num_major_vessels INT,
-    IN t_thalassemia VARCHAR(20),
-    IN t_recorded_date DATE
+    IN p_gender TINYINT(1),
+    IN p_result VARCHAR(10),
+    IN t_heart_rate INT,
+    IN t_systolic_bp INT,
+    IN t_diastolic_bp INT,
+    IN t_blood_sugar INT,
+    IN t_ck_mb DECIMAL(6,2),
+    IN t_troponin DECIMAL(6,3)
 )
 BEGIN
     -- Step 1: Insert into patients table
-    INSERT INTO patients (
-        age, gender, resting_bp, cholesterol,
-        fasting_bs, max_heart_rate, exercise_angina, target
-    )
-    VALUES (
-        p_age, p_gender, p_resting_bp, p_cholesterol,
-        p_fasting_bs, p_max_heart_rate, p_exercise_angina, p_target
-    );
+    INSERT INTO patients (age, gender, result)
+    VALUES (p_age, p_gender, p_result);
 
     -- Step 2: Get the new patient's ID
     SET @new_patient_id = LAST_INSERT_ID();
 
     -- Step 3: Insert corresponding test result
     INSERT INTO tests (
-        patient_id, ecg_result, st_depression, slope,
-        num_major_vessels, thalassemia, recorded_date
+        patient_id, heart_rate, systolic_bp, diastolic_bp,
+        blood_sugar, ck_mb, troponin
     )
     VALUES (
-        @new_patient_id, t_ecg_result, t_st_depression, t_slope,
-        t_num_major_vessels, t_thalassemia, t_recorded_date
+        @new_patient_id, t_heart_rate, t_systolic_bp, t_diastolic_bp,
+        t_blood_sugar, t_ck_mb, t_troponin
     );
 END$$
 

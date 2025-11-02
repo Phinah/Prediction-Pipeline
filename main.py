@@ -4,83 +4,109 @@ import mysql.connector
 import Request
 
 # Create the FastAPI app
-app = FastAPI(title="Heart Attack API", version="1.0")
+app = FastAPI(title="Heart Attack Prediction API", version="2.0")
 
-# Database connection function
+# --- Database connection ---
 def get_db_connection():
-    connection = mysql.connector.connect(
-        host="localhost",          # keep this if you're using MySQL locally
-        user="root",               # your MySQL username
-        password="admin123",       # ✅ your real MySQL password
-        database="heart_attack_db" # ✅ your confirmed database name
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="admin123",        # ✅ your MySQL password
+        database="heart_attack_db"  # ✅ your database
     )
-    return connection
 
-
-# --- A simple test endpoint ---
+# --- Root endpoint ---
 @app.get("/")
-def read_root():
-    return {"message": "✅ FastAPI is running and connected to MySQL database heart_attack_db!"}
+def root():
+    return {"message": "✅ FastAPI is running and connected to heart_attack_db!"}
 
+# --- CREATE (POST) ---
+@app.post("/patients")
+def add_patient(age: int, gender: int, result: str,
+                heart_rate: int, systolic_bp: int, diastolic_bp: int,
+                blood_sugar: int, ck_mb: float, troponin: float):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-# --- UPDATE (PUT) endpoint ---
-@app.put("/patients/{patient_id}")
-def update_patient(
-    patient_id: int,
-    age: int,
-    gender: str,
-    resting_bp: int,
-    cholesterol: int,
-    fasting_bs: int,
-    max_heart_rate: int,
-    exercise_angina: int,
-    target: int
-):
+        # Insert patient
+        cursor.execute(
+            "INSERT INTO patients (age, gender, result) VALUES (%s, %s, %s)",
+            (age, gender, result)
+        )
+        patient_id = cursor.lastrowid
+
+        # Insert test
+        cursor.execute("""
+            INSERT INTO tests (patient_id, heart_rate, systolic_bp, diastolic_bp,
+                               blood_sugar, ck_mb, troponin)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (patient_id, heart_rate, systolic_bp, diastolic_bp, blood_sugar, ck_mb, troponin))
+
+        conn.commit()
+        return {"message": f"✅ Added patient {patient_id} successfully!"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+# --- READ (GET) ---
+@app.get("/patients")
+def get_patients():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM patients")
+        return cursor.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+# --- UPDATE (PUT) ---
+@app.put("/tests/{test_id}")
+def update_test(test_id: int,
+                heart_rate: int, systolic_bp: int, diastolic_bp: int,
+                blood_sugar: int, ck_mb: float, troponin: float):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
         update_query = """
-            UPDATE Patients
-            SET age = %s,
-                gender = %s,
-                resting_bp = %s,
-                cholesterol = %s,
-                fasting_bs = %s,
-                max_heart_rate = %s,
-                exercise_angina = %s,
-                target = %s
-            WHERE patient_id = %s
+            UPDATE tests
+            SET heart_rate = %s,
+                systolic_bp = %s,
+                diastolic_bp = %s,
+                blood_sugar = %s,
+                ck_mb = %s,
+                troponin = %s
+            WHERE test_id = %s
         """
-        cursor.execute(update_query, (
-            age, gender, resting_bp, cholesterol, fasting_bs,
-            max_heart_rate, exercise_angina, target, patient_id
-        ))
+        cursor.execute(update_query, (heart_rate, systolic_bp, diastolic_bp, blood_sugar, ck_mb, troponin, test_id))
         conn.commit()
 
         if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail=f"⚠️ No patient found with ID {patient_id}")
+            raise HTTPException(status_code=404, detail=f"⚠️ No test found with ID {test_id}")
 
-        return {"message": f"✅ Patient {patient_id} updated successfully"}
+        return {"message": f"🧾 Test {test_id} updated successfully"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
     finally:
         cursor.close()
         conn.close()
 
-
-#  Delete (DELETE) endpoint for removing patients
-
+# --- DELETE (DELETE) ---
 @app.delete("/patients/{patient_id}")
 def delete_patient(patient_id: int):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        delete_query = "DELETE FROM Patients WHERE patient_id = %s"
-        cursor.execute(delete_query, (patient_id,))
+        cursor.execute("DELETE FROM patients WHERE patient_id = %s", (patient_id,))
         conn.commit()
 
         if cursor.rowcount == 0:
@@ -90,7 +116,23 @@ def delete_patient(patient_id: int):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
 
+# --- EXTRA: Fetch Latest Test Entry (Task 3 preparation) ---
+@app.get("/tests/latest")
+def get_latest_test():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM tests ORDER BY recorded_date DESC LIMIT 1")
+        latest = cursor.fetchone()
+        if not latest:
+            raise HTTPException(status_code=404, detail="No test records found")
+        return latest
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
         conn.close()
