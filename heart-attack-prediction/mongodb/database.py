@@ -8,17 +8,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get MongoDB connection details from environment variables
-# Falls back to empty string if not set, which will raise a clear error
-MONGODB_URL = os.getenv("MONGODB_URL")
+# Default to localhost for local development if MONGODB_URL is not provided.
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
 DATABASE_NAME = os.getenv("DATABASE_NAME", "heart_attack_prediction_db")
 
-# Validate that required environment variables are set
-if not MONGODB_URL:
-    raise ValueError(
-        "MONGODB_URL environment variable is not set. "
-        "Please set it in your environment or create a .env file with: "
-        "MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/"
-    )
+# If the user didn't set MONGODB_URL explicitly, print a small warning so they
+# know the code will try to use a local MongoDB instance.
+if MONGODB_URL == "mongodb://localhost:27017":
+    print("[mongodb.database] Using default MONGODB_URL='mongodb://localhost:27017' - set MONGODB_URL env var to use a different server")
 
 # Global variable to store database connection
 database = None
@@ -32,17 +29,17 @@ def connect_to_mongo():
     global client, database
     
     try:
-        # Check if URL is provided
-        if not MONGODB_URL:
-            raise ValueError("MONGODB_URL not found in environment variables")
-        
-        # Create MongoDB client with ServerApi for Atlas
-        client = MongoClient(MONGODB_URL, server_api=ServerApi('1'))
-        
-        # Test the connection with ping
+        # Attempt to create a client. For Atlas SRV URIs we prefer using ServerApi
+        # but fall back to a plain client if that fails (works for local MongoDB).
+        try:
+            client = MongoClient(MONGODB_URL, server_api=ServerApi('1'))
+        except Exception:
+            client = MongoClient(MONGODB_URL)
+
+        # Test the connection with ping (this will raise if unreachable)
         client.admin.command('ping')
         print(f"Pinged your deployment. You successfully connected to MongoDB!")
-        
+
         # Get database
         database = client[DATABASE_NAME]
         print(f"Connected to database: {DATABASE_NAME}")
@@ -107,3 +104,9 @@ def close_mongo_connection():
         client.close()
         database = None
         print("MongoDB connection closed")
+
+
+# Backwards-compatible alias expected by other modules
+def close_connection():
+    """Alias to close the MongoDB connection (keeps older import name)."""
+    return close_mongo_connection()

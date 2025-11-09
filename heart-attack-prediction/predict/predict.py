@@ -3,6 +3,7 @@ Prediction script for heart attack risk
 Fetches latest patient data from API and makes heart attack prediction
 """
 
+import os
 import requests
 import joblib
 import pandas as pd
@@ -10,7 +11,10 @@ import numpy as np
 from datetime import datetime
 
 # Configuration
-API_URL = "http://localhost:8000/api/latest-entry"
+# Allow overriding the API endpoint via environment variable so the script can target
+# a hosted API (ngrok / Render / Railway etc.). Default remains the local endpoint.
+
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/api/latest-entry")
 MODEL_PATH = "heart_attack_model.pkl"
 FEATURE_NAMES_PATH = "feature_names.pkl"
 
@@ -97,39 +101,56 @@ def load_model():
     try:
         model = joblib.load(MODEL_PATH)
         feature_names = joblib.load(FEATURE_NAMES_PATH)
+        
+        # Convert to list if it's a pandas Series
+        if hasattr(feature_names, 'tolist'):
+            feature_names = feature_names.tolist()
+        
         print(f"Model loaded: Random Forest Classifier")
         print(f"Features: {len(feature_names)}")
+        
+        # Debug info
+        if hasattr(model, 'feature_names_in_'):
+            print("Expected features:", model.feature_names_in_)
+            print("Provided features:", feature_names)
+        
         return model, feature_names
     except FileNotFoundError:
         print(f"Error: Model file not found")
         print(f"Looking for: {MODEL_PATH}")
-        print(f"Make sure you've trained the model first: python train_model.py")
         return None, None
     except Exception as e:
         print(f"Error loading model: {e}")
         return None, None
-
+    
 def make_prediction(model, feature_names, features):
     """Make prediction using the model"""
-    print("\nMaking prediction...")
+    print("Making prediction")
     
-    # Convert features to DataFrame in correct order
-    X = pd.DataFrame([features])[feature_names]
-    
-    # Get prediction
-    prediction = model.predict(X)[0]
-    probability = model.predict_proba(X)[0]
-    
-    # Get confidence
-    confidence = max(probability) * 100
-    
-    return prediction, confidence, probability
+    try:
+        # Create DataFrame with your features
+        X = pd.DataFrame([features], columns=feature_names)
+        
+        # Reorder columns to match what the model expects
+        if hasattr(model, 'feature_names_in_'):
+            expected_features = model.feature_names_in_
+            print(f"Reordering features to match model expectations")
+            X = X[expected_features]  # Reorder columns to match training order
+        
+        # Make prediction
+        prediction = model.predict(X)[0]
+        probabilities = model.predict_proba(X)[0]
+        confidence = max(probabilities) * 100
+        
+        return prediction, confidence, probabilities
+        
+    except Exception as e:
+        print(f"Error making prediction: {e}")
+        return None, None, None
 
 def display_prediction(prediction, confidence, probability):
     """Display prediction results"""
-    print("\n" + "="*60)
     print("PREDICTION RESULTS")
-    print("="*60)
     
     if prediction == 1:
         print("\n PREDICTION: POSITIVE")

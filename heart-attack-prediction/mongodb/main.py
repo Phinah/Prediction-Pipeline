@@ -1,16 +1,16 @@
- # FastAPI app for MongoDB operations
+# FastAPI app for MongoDB operations
 
 """
 Production FastAPI Application
 Run: python main.py
 """
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from database import get_database, close_connection
 from get_endpoints import router as get_router
-from post_endpoints import router as post_router  # NEW
+from post_endpoints import router as post_router
 import config
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create FastAPI app
 app = FastAPI(
@@ -52,7 +52,7 @@ async def root():
         "message": "Heart Attack Prediction API",
         "status": "running",
         "documentation": "/docs",
-        "team_member": "Idara - MongoDB GET & POST Endpoints"
+        "team_member": "2 - MongoDB GET & POST Endpoints"
     }
 
 # Health check

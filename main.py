@@ -1,4 +1,4 @@
-# --- FastAPI + MySQL Connection Setup ---
+# FastAPI and MySQL Connection Setup 
 from fastapi import FastAPI, HTTPException, Request, Body
 import mysql.connector
 from dotenv import load_dotenv
@@ -24,7 +24,7 @@ def read_root():
     return {"message": "FastAPI is running and connected to MySQL database heart_attack_db!"}
 
 
-# --- UPDATE (PUT) endpoint ---
+# UPDATE (PUT) endpoint
 @app.put("/patients/{patient_id}")
 def update_patient(
     patient_id: int,
@@ -96,7 +96,7 @@ def delete_patient(patient_id: int):
         cursor.close()
         conn.close()
 
-# --- CREATE (POST) endpoint ---
+# CREATE (POST) endpoint 
 @app.post("/patients/")
 def create_patient(
     age: int = Body(...),
@@ -201,7 +201,7 @@ def get_all_patients():
         cursor.close()
         conn.close()
 
-# --- UPDATE (PUT) ---
+# UPDATE (PUT) 
 @app.put("/tests/{test_id}")
 def update_test(test_id: int,
                 heart_rate: int, systolic_bp: int, diastolic_bp: int,

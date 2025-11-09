@@ -1,0 +1,21 @@
+# Render Blueprint for automatic deployment
+# This file enables "Deploy to Render" button functionality
+# Render will automatically deploy your API when you push to GitHub
+
+services:
+  - type: web
+    name: heart-attack-prediction-api
+    runtime: docker
+    repo: https://github.com/Phinah/Prediction-Pipeline  # Update with your repo URL
+    branch: main
+    rootDir: heart-attack-prediction
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: MONGODB_URL
+        sync: false  # You'll set this in Render dashboard (use MongoDB Atlas connection string)
+      - key: DATABASE_NAME
+        value: heart_attack_prediction_db
+      - key: PORT
+        value: 8000
+    healthCheckPath: /health
+    autoDeploy: true  # Auto-deploy on git push

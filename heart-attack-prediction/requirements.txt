@@ -1,12 +1,18 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-pymongo==4.6.0
-python-dotenv==1.0.0
-pydantic==2.5.0
-pandas==2.1.3
-numpy==1.26.2
-fastapi
-uvicorn
-mysql-connector-python
-pydantic
-python-dotenv
+# FastAPI and server
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+python-dotenv==1.0.1
+
+# Database
+pymongo==4.10.1
+mysql-connector-python==9.1.0
+
+# Machine Learning (for server-side prediction and client script)
+scikit-learn==1.6.0
+pandas==2.2.3
+numpy==2.1.3
+joblib==1.4.2
+
+# HTTP client (for predict.py script)
+requests==2.32.3

@@ -18,13 +18,12 @@ def get_db_connection():
     return connection
 
 
-# --- A simple test endpoint ---
+# A simple test endpoint 
 @app.get("/")
 def read_root():
     return {"message": "FastAPI is running and connected to MySQL database heart_attack_db!"}
 
-
-# --- UPDATE (PUT) endpoint ---
+# UPDATE (PUT) endpoint
 @app.put("/patients/{patient_id}")
 def update_patient(
     patient_id: int,
@@ -96,7 +95,7 @@ def delete_patient(patient_id: int):
         cursor.close()
         conn.close()
 
-# --- CREATE (POST) endpoint ---
+# CREATE (POST) endpoint
 @app.post("/patients/")
 def create_patient(
     age: int = Body(...),
@@ -201,7 +200,7 @@ def get_all_patients():
         cursor.close()
         conn.close()
 
-# --- UPDATE (PUT) ---
+# UPDATE (PUT) endpoint
 @app.put("/tests/{test_id}")
 def update_test(test_id: int,
                 heart_rate: int, systolic_bp: int, diastolic_bp: int,
@@ -226,10 +225,79 @@ def update_test(test_id: int,
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail=f"⚠️ No test found with ID {test_id}")
 
-        return {"message": f"🧾 Test {test_id} updated successfully"}
+        return {"message": f"Test {test_id} updated successfully"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
         conn.close()
+
+
+# GET LATEST ENTRY endpoint for predict.py
+@app.get("/api/latest-entry")
+def get_latest_entry():
+    """
+    Fetch the latest test record with patient info for prediction.
+    This endpoint combines data from patients and tests tables.
+    """
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Get the latest test with its corresponding patient data
+        query = """
+            SELECT 
+                p.patient_id, p.age, p.gender, p.result,
+                t.test_id, t.heart_rate, t.systolic_bp, t.diastolic_bp,
+                t.blood_sugar, t.ck_mb, t.troponin, t.recorded_date
+            FROM tests t
+            JOIN patients p ON t.patient_id = p.patient_id
+            ORDER BY t.recorded_date DESC, t.test_id DESC
+            LIMIT 1
+        """
+        cursor.execute(query)
+        result = cursor.fetchone()
+
+        if not result:
+            raise HTTPException(status_code=404, detail="No test records found in database")
+
+        # Format response to match MongoDB structure for predict.py compatibility
+        response = {
+            "patient": {
+                "patient_id": result["patient_id"],
+                "age": result["age"],
+                "gender": result["gender"]
+            },
+            "medical_record": {
+                "heart_rate": result["heart_rate"],
+                "systolic_blood_pressure": result["systolic_bp"],
+                "diastolic_blood_pressure": result["diastolic_bp"],
+                "blood_sugar": result["blood_sugar"]
+            },
+            "heart_attack_test": {
+                "test_id": result["test_id"],
+                "ck_mb": float(result["ck_mb"]),
+                "troponin": float(result["troponin"]),
+                "result": result["result"] if result["result"] else "unknown"
+            }
+        }
+
+        return response
+
+    except mysql.connector.Error as db_err:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(db_err)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
