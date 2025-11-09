@@ -1,7 +1,5 @@
 # Heart Attack Prediction Pipeline – FastAPI + MongoDB/MySQL + ML
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Phinah/Prediction-Pipeline)
-
 ## Overview
 
 This project demonstrates:
@@ -11,7 +9,7 @@ This project demonstrates:
 - **Prediction pipeline** - Fetches latest patient data from API and predicts heart attack risk
 - **Cloud deployment** - Dockerized API deployable to Render, Railway, or any container platform
 
-## 🚀 Quick Start (Using Hosted API)
+## Quick Start (Using Hosted API)
 
 **For users cloning this repo who want to use the prediction script:**
 
@@ -45,7 +43,7 @@ The script will fetch the latest patient data from the hosted API, run it throug
 
 ---
 
-## 🌐 Deploy Your Own API Instance
+## Deploy Your Own API Instance
 
 ### Option 1: Deploy to Render (Recommended - Free Tier Available)
 
@@ -116,7 +114,7 @@ docker run -p 8000:8000 \
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 heart-attack-prediction/
@@ -186,7 +184,7 @@ heart-attack-prediction/
 
 ---
 
-## 🧪 API Endpoints
+## API Endpoints
 
 ### MongoDB Endpoints
 
@@ -219,7 +217,7 @@ See `mySQL/main.py` for MySQL-based endpoints.
 
 ---
 
-## 🤖 Machine Learning Model
+## Machine Learning Model
 
 The prediction model is trained on heart attack risk factors:
 - **Features**: Age, Gender, Heart Rate, Blood Pressure, Blood Sugar, CK-MB, Troponin
@@ -232,7 +230,7 @@ The prediction model is trained on heart attack risk factors:
 
 ---
 
-## 🔐 Environment Variables
+## Environment Variables
 
 Required for deployment:
 
@@ -245,7 +243,7 @@ Required for deployment:
 
 ---
 
-## 📊 Data Schema
+## Data Schema
 
 ### MongoDB Collections
 
@@ -284,7 +282,7 @@ Required for deployment:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repo
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -294,20 +292,20 @@ Required for deployment:
 
 ---
 
-## 📝 License
+## License
 
 This project is part of an academic assignment for ALU.
 
 ---
 
-## 👥 Authors
+## Authors
 
 - **Phinah** - [GitHub](https://github.com/Phinah)
 - **Contributors** - See commit history
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 **"Cannot connect to API" error in predict.py:**
 - Ensure `API_URL` environment variable is set
